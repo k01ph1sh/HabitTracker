@@ -6,29 +6,41 @@ import datetime
 
 
 try:
-    if os.path.exists("habitData.json"):
-        with open("habitData.json", "r") as file:
-            months=json.load(file)
+    #checks if there is a currently existing file, if not, creates data and saves it, else opens file
+    if not os.path.exists("habitData.json"):
+        monthsMain = {
+            "JAN": [[] for i in range(31)],
+            "FEB": [[] for i in range(28)],
+            "MAR": [[] for i in range(31)],
+            "APR": [[] for i in range(30)],
+            "MAY": [[] for i in range(31)],
+            "JUNE": [[] for i in range(30)],
+            "JULY": [[] for i in range(31)],
+            "AUG": [[] for i in range(31)],
+            "SEPT": [[] for i in range(30)],
+            "OCT": [[] for i in range(31)],
+            "NOV": [[] for i in range(30)],
+            "DEC": [[] for i in range(31)]
+    }
+        with open("habitData.json", "w") as file:
+            json.dump(monthsMain, file, indent=4)
     else:
-        months= {
-        "JAN": [[] for i in range(31)],
-        "FEB": [[] for i in range(28)],
-        "MAR": [[] for i in range(31)],
-        "APR": [[] for i in range(30)],
-        "MAY": [[] for i in range(31)],
-        "JUNE": [[] for i in range(30)],
-        "JULY": [[] for i in range(31)],
-        "AUG": [[] for i in range(31)],
-        "SEPT": [[] for i in range(30)],
-        "OCT": [[] for i in range(31)],
-        "NOV": [[] for i in range(30)],
-        "DEC": [[] for i in range(31)]
-}
+        with open("habitData.json", "r") as file:
+            monthsMain = json.load(file)
 
+    #prints help menu
+    def help():
+        pass
 
+    #takes an arguement and logs it on specific day
     def logHabit():
         pass
-    def printMonth():
+    #prints the month specified in terminal, or searches for one
+    def printMonth(args, months):
+        if not args or args[0].upper() not in months: 
+            userMonth= input("specification not found, please pick a month\n>").upper()
+        else:
+            userMonth = args[0].upper()
         for i in range(len(months[userMonth])):
             day = months[userMonth][i]
             if len(day)==0:
@@ -43,50 +55,69 @@ try:
         pass
     def removeHabit():
         pass 
+    def fullReset():
+        failsafe=input("Are you sure? proceeding will wipe all habit related data and give you a blank calendar. type RESET to proceed\n")
+        if failsafe =="RESET":
+            with open ("habitData.json", "w") as file:
+                monthsMain ={
+                "JAN": [[] for i in range(31)],
+                "FEB": [[] for i in range(28)],
+                "MAR": [[] for i in range(31)],
+                "APR": [[] for i in range(30)],
+                "MAY": [[] for i in range(31)],
+                "JUNE": [[] for i in range(30)],
+                "JULY": [[] for i in range(31)],
+                "AUG": [[] for i in range(31)],
+                "SEPT": [[] for i in range(30)],
+                "OCT": [[] for i in range(31)],
+                "NOV": [[] for i in range(30)],
+                "DEC": [[] for i in range(31)]
+                }
+                json.dump(monthsMain, file, indent = 4)
+
+
     commands= {
         "log": logHabit,
         "view": printMonth,
         "summary": sumMonth,
-        "remove" : removeHabit
+        "remove" : removeHabit,
+        "reset" : fullReset
 }
 
     today = datetime.datetime.now()
     def modCalender (habit, day, months, month):
         months[month][(int(day)-1)].append(habit)
     def getModSpecs(month, months):
-        while True:
-
-            while True:
-                modDay=input("What day would you like to log X habit? (enter just the num)\n")
-                try:
-                    int(modDay)
-                    break
-                except ValueError:
-                    print("Please enter a number")
-            if int(modDay)>len(months[month]):
-                print(f"please enter a valid day, {month} is {len(months[month])} days long.")
-            else:
-                break
-        modHabit=input(f"what would you like to log on {modDay}, {month}?\n")
-        return modHabit, modDay
-
+        pass
+        
+        
     while True:
-        userMonth = input("What month would you like to view?\n")
-        userMonth = userMonth.upper()
-        if userMonth not in months.keys():
-            print("month not found")
-        else:
-            printMonth()
-            edit = input("Would You like to log anything? (Y/N) \n")
-            if edit.upper() == "Y":
-                modHabit, modDay = getModSpecs(userMonth, months)
-                modCalender(modHabit, modDay, months,userMonth)
-                printMonth()
-                with open("habitData.json", "w") as file:
-                    json.dump(months, file, indent=4)
+        userInput = input(">").split()
+        if not userInput:
+            continue
+
+        command= userInput[0]
+        userArgs = userInput[1:]
+        match command:
+            case "view":
+                printMonth(userArgs, monthsMain)
+            case "log":
+                logHabit()
+            case "summary":
+                sumMonth()
+            case "remove":
+                removeHabit()
+            case "reset":
+                fullReset()
+            case "help":
+                help()
+            case _:
+                print("unrecognized command, use help for guidance")
+                continue
+
 except KeyboardInterrupt:
     with open("habitData.json", "w") as file:
-        json.dump(months, file, indent=4)
-    quit
+        json.dump(monthsMain, file, indent=4)
+    quit()
 
     
