@@ -30,11 +30,16 @@ try:
 
     #prints help menu
     def help():
-        pass
+        print("""view: used to print a specific month; USAGE: view MONTH\nreset: will wipe all calendar data and quit the program; THERE IS NO WAY TO RECOVER LOST DATA; USAGE: reset""")
 
     #takes an arguement and logs it on specific day
-    def logHabit():
-        pass
+    def logHabit(args, months):
+        try:
+            months[args[1].upper()][int(args[2])].append(args[0])
+        except (ValueError, KeyError):
+            print("invalid input, use format <log habit month day>")
+                
+
     #prints the month specified in terminal, or searches for one
     def printMonth(args, months):
         if not args or args[0].upper() not in months: 
@@ -57,7 +62,7 @@ try:
         pass 
     def fullReset():
         failsafe=input("Are you sure? proceeding will wipe all habit related data and give you a blank calendar. type RESET to proceed\n")
-        if failsafe =="RESET":
+        if failsafe.strip() =="RESET":
             with open ("habitData.json", "w") as file:
                 monthsMain ={
                 "JAN": [[] for i in range(31)],
@@ -73,7 +78,9 @@ try:
                 "NOV": [[] for i in range(30)],
                 "DEC": [[] for i in range(31)]
                 }
-                json.dump(monthsMain, file, indent = 4)
+                with open("habitData.json", "w") as file:
+                    json.dump(monthsMain, file, indent = 4)
+                quit()
 
 
     commands= {
@@ -92,17 +99,18 @@ try:
         
         
     while True:
-        userInput = input(">").split()
+        userInput = input(">").lower().split()
         if not userInput:
             continue
 
         command= userInput[0]
         userArgs = userInput[1:]
+        print(userArgs)
         match command:
             case "view":
                 printMonth(userArgs, monthsMain)
             case "log":
-                logHabit()
+                logHabit(userArgs, monthsMain)
             case "summary":
                 sumMonth()
             case "remove":
@@ -119,5 +127,3 @@ except KeyboardInterrupt:
     with open("habitData.json", "w") as file:
         json.dump(monthsMain, file, indent=4)
     quit()
-
-    
