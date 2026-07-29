@@ -120,12 +120,16 @@ try:
     def removeHabit(args, months):
         try:
             if args[1].lower().strip() != "today":
-                months[args[1].upper()][(int(args[2])-1)].remove(args[0])
+                userMonth = args[1].upper()
+                day = (int(args[2]) - 1)
+                habit = args[0].upper()
+                months[userMonth][day].remove(habit)
             else:
                 time = datetime.datetime.now()
                 day = int(time.strftime("%d"))
                 month = time.strftime("%b").upper()
-                months[month][(day-1)].remove(args[0])                
+                habit = args[0].upper()
+                months[month][(day-1)].remove(habit)                
         except ValueError:
             print("Habit not found")
         except (IndexError, KeyError):
