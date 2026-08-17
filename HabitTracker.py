@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 import json
-import os
+from pathlib import Path
 import datetime
 dateData = datetime.datetime.now()
 currentYear = dateData.strftime("%Y")
 
+dataPath = Path(Path.home()/"Habit-Tracker")
+
 try:
-    habitDataFileName=f"habitData-{currentYear}.json"
-    #checks if there is a currently existing file, if not, creates data and saves it, else opens file
-    if not os.path.exists(habitDataFileName):
-        monthsMain = {
+    def genEmptyCalendar():
+        monthsMain ={
             "JAN": [[] for i in range(31)],
             "FEB": [[] for i in range(28)],
             "MAR": [[] for i in range(31)],
@@ -22,20 +22,36 @@ try:
             "OCT": [[] for i in range(31)],
             "NOV": [[] for i in range(30)],
             "DEC": [[] for i in range(31)]
-    }
-        with open(habitDataFileName, "w") as file:
-            json.dump(monthsMain, file, indent=4)
+        }
+        return monthsMain
+    
+    def saveData(months): 
+        with open(habitDataPath, "w") as f:
+            json.dump(months, f, indent=4)
+    
+    habitDataFileName=f"habitData-{currentYear}.json"
+    #checks if there is a currently existing file, if not, creates data and saves it, else opens file
+    if not dataPath.exists():
+        Path.mkdir(dataPath)
+
+    habitDataPath = Path(dataPath / habitDataFileName)
+
+    if not habitDataPath.exists():
+        monthsMain = genEmptyCalendar()
+        saveData(monthsMain)
+        print()
     else:
-        with open(habitDataFileName, "r") as file:
-            monthsMain = json.load(file)
+        with open(habitDataPath, "r") as f:
+            monthsMain = json.load(f)
+    
     def printSummary(counts):
-                activities = list(counts.keys())
+                habitList = list(counts.keys())
                 print("SUMMARY")
-                for i in range(len(activities)):
-                    habit = activities[i]
+                for habit in habitList:
                     print(f"You did {habit}: {counts[habit]} times.")        
+    
     #prints help menu
-    def help():
+    def printHelp():
         print("""\nPossible month values: jan, feb, mar, apr, may, jun, jul, aug, sep, oct, nov, dec.\n
                 COMMANDS\n
                 view: used to print a specific month; USAGE: view MONTH\n
@@ -59,19 +75,18 @@ try:
             print("invalid input, use format <log habit month day>")
         except IndexError:
             print("Specifications not found, use format <log habit month day>")
+
     def sumHabitsYear(counts, months):
-                monthsList = list(months.keys())
-                for i in range(len(monthsList)):
-                    currentMonth = monthsList[i]
-                    for day in range(len(months[currentMonth])):
-                        if not months[currentMonth][day]:
+                for month, days in months.items():
+                    for day in days:
+                        if not day:
                             continue
                         else:
-                            for habit in range(len(months[currentMonth][day])):
-                                if months[currentMonth][day][habit] not in counts.keys():
-                                    counts[months[currentMonth][day][habit]] = 1
+                            for habit in day:
+                                if habit not in counts.keys():
+                                    counts[habit] = 1
                                 else:
-                                    counts[months[currentMonth][day][habit]] += 1 
+                                    counts[habit] += 1 
                 return counts
     #prints the month specified in terminal, or searches for one
     def printMonth(args, months):
@@ -80,15 +95,14 @@ try:
             return
         else:
             userMonth = args[0].upper()
-        for i in range(len(months[userMonth])):
-            day = months[userMonth][i]
+        for i, day in enumerate(months[userMonth], start=1):
             if len(day)==0:
-                print(f"[{(i+1)}]", end="")
+                print(f"[{i}]", end="")
             else:
                 print("[" + "/".join(day) + "]", end="")
-            if (i + 1) % 7 == 0:
+            if i % 7 == 0:
                 print()
-            if (i+1) == len(months[userMonth]):
+            if (i) == len(months[userMonth]):
                 print()
     def sumHabits(args, months):
         try:
@@ -97,25 +111,27 @@ try:
             if  sumPeriod == "year":
                 counts = sumHabitsYear(counts, months)
                 printSummary(counts)
-            elif os.path.exists(f"habitData-{sumPeriod}.json"): 
-                with open(f"habitData-{sumPeriod}.json", "r") as file:
-                    nonYearMonths = json.load(file)
+            elif Path.exists(dataPath/ f"habitData-{sumPeriod}.json"): 
+                with open(dataPath / f"habitData-{sumPeriod}.json", "r") as f:
+                    nonYearMonths = json.load(f)
                 sumHabitsYear(counts, nonYearMonths)
                 printSummary(counts)
             else:
                 userMonth = args[0].upper()
-                for day in range(len(months[userMonth])):
-                    if not months[userMonth][day]:
+                for day in months[userMonth]:
+                    if not day:
                         continue
                     else:
-                        for habit in range(len(months[userMonth][day])):
-                            if months[userMonth][day][habit] not in counts.keys():
-                                counts[months[userMonth][day][habit]] = 1
+                        for habit in day:
+                            if habit not in counts.keys():
+                                counts[habit] = 1
                             else:
-                                counts[months[userMonth][day][habit]] += 1   
+                                counts[habit] += 1   
                 printSummary(counts)
+
         except KeyError:
             print("Specifications not found, please use format >sum month/year; use command help for more info")
+
     # removes a habit from the given date arguments
     def removeHabit(args, months):
         try:
@@ -137,27 +153,10 @@ try:
     def fullReset():
         failsafe=input("Are you sure? proceeding will wipe all habit related data and give you a blank calendar. type RESET to proceed\n")
         if failsafe.strip() =="RESET":
-            with open (habitDataFileName, "w") as file:
-                monthsMain ={
-                "JAN": [[] for i in range(31)],
-                "FEB": [[] for i in range(28)],
-                "MAR": [[] for i in range(31)],
-                "APR": [[] for i in range(30)],
-                "MAY": [[] for i in range(31)],
-                "JUN": [[] for i in range(30)],
-                "JUL": [[] for i in range(31)],
-                "AUG": [[] for i in range(31)],
-                "SEP": [[] for i in range(30)],
-                "OCT": [[] for i in range(31)],
-                "NOV": [[] for i in range(30)],
-                "DEC": [[] for i in range(31)]
-                }
-                with open(habitDataFileName, "w") as file:
-                    json.dump(monthsMain, file, indent = 4)
-                quit()
+            monthsMain = genEmptyCalendar
+            saveData(monthsMain)
 
 
-    today = datetime.datetime.now()
 
         
         
@@ -180,12 +179,12 @@ try:
             case "reset":
                 fullReset()
             case "help":
-                help()
+                printHelp()
+            case "save":
+                saveData(monthsMain)
             case _:
                 print("unrecognized command, use help for guidance")
                 continue
 
 except KeyboardInterrupt:
-    with open(habitDataFileName, "w") as file:
-        json.dump(monthsMain, file, indent=4)
-    quit()
+    saveData(monthsMain)
